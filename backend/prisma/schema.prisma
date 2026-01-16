@@ -23,6 +23,24 @@ enum UserStatus {
   blocked
 }
 
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum OrderStatus {
+  pending_payment
+  paid
+  cancelled
+  expired
+}
+
+enum PaymentStatus {
+  init
+  success
+  failed
+}
+
 // User model with basic fields
 model User {
   id        String     @id @default(uuid())
@@ -37,3 +55,130 @@ model User {
   @@map("users")
 }
 
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique @db.VarChar(255)
+  description String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  products Product[]
+  @@map("categories")
+}
+
+model Product {
+  id        String     @id @default(uuid())
+  name      String     @unique @db.VarChar(255)
+  description String?
+  price     Decimal @db.Decimal(10, 2)
+  stock     Int
+  images     String?
+  status     ProductStatus    @default(active)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  categoryId String?
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String @id @default(uuid())
+  cartId   String @map("cart_id")
+  productId String @map("product_id")
+  quantity Int
+
+  cart     Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product  Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  status         OrderStatus @default(pending_payment)
+  totalAmount    Decimal     @map("total_amount") @db.Decimal(12, 2)
+  idempotencyKey String      @map("idempotency_key")
+
+  createdAt      DateTime    @default(now()) @map("created_at")
+  paidAt         DateTime?   @map("paid_at")
+  cancelledAt    DateTime?   @map("cancelled_at")
+
+  // Relations
+  items          OrderItem[]
+  payments       Payment[]
+  events         OrderEvent[]
+
+  // Constraints
+  @@unique([userId, idempotencyKey]) // Idempotency check scope user
+  @@map("orders")
+}
+
+// --------------------------------------
+// 6. ORDER ITEMS (Snapshot Data)
+// --------------------------------------
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String  @map("order_id")
+  productId   String    @map("product_id") 
+  
+  // Snapshot Fields 
+  productName String  @map("product_name")
+  unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
+  quantity    Int
+  lineTotal   Decimal @map("line_total") @db.Decimal(12, 2)
+
+  // Relations
+  order       Order    @relation(fields: [orderId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id]) // Relation only for trace back, not for display price
+
+  @@map("order_items")
+}
+
+// --------------------------------------
+// 7. PAYMENTS (Attempts)
+// --------------------------------------
+
+model Payment {
+  id        String        @id @default(uuid())
+  orderId   String        @map("order_id")
+  status    PaymentStatus @default(init)
+  amount    Decimal       @db.Decimal(12, 2)
+  provider  String        // e.g., "STRIPE", "MOMO", "ZALOPAY"
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  order     Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+// --------------------------------------
+// 8. ORDER EVENTS (Audit Log)
+// --------------------------------------
+
+model OrderEvent {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  eventType String   @map("event_type") // e.g., "ORDER_CREATED", "PAYMENT_CONFIRMED"
+  oldStatus String?  @map("old_status") // Save String to be flexible if enum changes in the future
+  newStatus String?  @map("new_status")
+  metadata  Json?    // JSONB for PostgreSQL
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@map("order_events")
+}
