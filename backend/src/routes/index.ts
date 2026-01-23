@@ -2,7 +2,7 @@ import { Router } from 'express';
 import userRoutes from './user.routes';
 import authRoutes from './auth.routes';
 import projectRoutes from './project.routes';
-import taskRoutes from './task.routes';
+import categoryRoutes from './category.routes';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ router.use('/users', userRoutes);
 // Project routes
 router.use('/projects', projectRoutes);
 
-// Task routes
-router.use('/tasks', taskRoutes);
+// Category routes
+router.use('/categories', categoryRoutes);
 
 export default router;

@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { DEFAULT_QUERY_PARAMS } from '../config/query';
 import { ExtendedRequest } from '@/types/express';
-import { TaskStatus } from '@/types/task.types';
 
 /**
  * Base validated query params
@@ -127,16 +126,3 @@ export const validatePaginationQuery = validateQuery();
 export const createQueryValidator = (config: QueryValidationConfig) => {
   return validateQuery(config);
 };
-
-/**
- * Pre-configured middleware for task queries with projectId filter
- */
-export const validateTaskQuery = validateQuery({
-  customSchema: z.object({
-    status: z.nativeEnum(TaskStatus).optional(),
-      assigneeId: z
-        .string()
-        .uuid('Invalid assignee ID format')
-        .optional(),
-  }),
-});
