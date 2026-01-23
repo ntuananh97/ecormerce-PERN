@@ -80,6 +80,7 @@ model Product {
 
   cartItems  CartItem[]
   orderItems OrderItem[]
+  @@map("products")
 }
 
 model Cart {
@@ -89,6 +90,7 @@ model Cart {
   updatedAt DateTime @updatedAt
 
   items     CartItem[]
+  @@map("carts")
 }
 
 model CartItem {
@@ -101,6 +103,7 @@ model CartItem {
   product  Product @relation(fields: [productId], references: [id])
 
   @@unique([cartId, productId])
+  @@map("cart_items")
 }
 
 model Order {

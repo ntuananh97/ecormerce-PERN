@@ -47,13 +47,18 @@ export class CategoryService {
    * @param id - Category ID
    * @returns Category object
    */
-  async getCategoryById(id: string): Promise<any> {
+  async getCategoryById(id: string): Promise<Category> {
     // TODO: Implement logic
     // - Find category by ID
     // - Throw NotFoundError if category doesn't exist
     // - Return category
+
+    const category = await prisma.category.findUnique({
+      where: { id }
+    })
+    if (!category) throw new NotFoundError('Category not found');
+    return category;
     
-    return {};
   }
 
   /**
