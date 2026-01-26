@@ -4,6 +4,7 @@ import authRoutes from './auth.routes';
 import projectRoutes from './project.routes';
 import categoryRoutes from './category.routes';
 import productRoutes from './product.routes';
+import cartRoutes from './cart.routes';
 
 const router = Router();
 
@@ -35,5 +36,8 @@ router.use('/categories', categoryRoutes);
 
 // Product routes
 router.use('/products', productRoutes);
+
+// Cart routes
+router.use('/carts', cartRoutes);
 
 export default router;
