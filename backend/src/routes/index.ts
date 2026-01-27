@@ -5,6 +5,7 @@ import projectRoutes from './project.routes';
 import categoryRoutes from './category.routes';
 import productRoutes from './product.routes';
 import cartRoutes from './cart.routes';
+import checkoutRoutes from './checkout.routes';
 
 const router = Router();
 
@@ -39,5 +40,8 @@ router.use('/products', productRoutes);
 
 // Cart routes
 router.use('/carts', cartRoutes);
+
+// Checkout routes
+router.use('/checkout', checkoutRoutes);
 
 export default router;

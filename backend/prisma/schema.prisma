@@ -146,6 +146,7 @@ model OrderItem {
   order       Order    @relation(fields: [orderId], references: [id])
   product     Product? @relation(fields: [productId], references: [id]) // Relation only for trace back, not for display price
 
+  @@unique([orderId, productId]) // Prevent duplicate products in the same order
   @@map("order_items")
 }
 
