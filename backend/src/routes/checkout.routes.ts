@@ -25,7 +25,7 @@ router.post('/create-order', checkAuthentication,
 router.get('/orders', checkAuthentication, validateOrderQuery, checkoutController.getMyOrders);
 
 // GET /api/checkout/orders/:id - Get order details
-// router.get('/orders/:id', checkAuthentication, checkoutController.getOrderById);
+router.get('/orders/:id', checkAuthentication, checkoutController.getOrderById);
 
 // // POST /api/checkout/payment/:orderId - Process payment for order
 // router.post('/payment/:orderId', checkAuthentication, checkoutController.processPayment);

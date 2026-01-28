@@ -60,7 +60,7 @@ export class CheckoutController {
   getOrderById = asyncHandler(async (req: ExtendedRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     // TODO: Implement logic
-    const result = await checkoutService.getOrderById(req.user!.id, id);
+    const result = await checkoutService.getOrderById(req.user!.id, req.user!.role, id);
 
     res.status(200).json({
       success: true,

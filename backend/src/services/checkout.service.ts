@@ -1,8 +1,10 @@
 import { CheckoutMode, CreateCheckoutSessionInput, CreateOrderInput, ICheckoutItem, ICheckoutSessionResponse, IOrderParams, OrderEventType } from '@/types/checkout.types';
 import { prisma } from '../config/database';
-import { BadRequestError } from '@/types/errors';
-import { Order, OrderStatus, Prisma, ProductStatus } from '@prisma/client';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/types/errors';
+import { Order, OrderStatus, Prisma, ProductStatus, UserRole } from '@prisma/client';
 import { IPaginatedResponse } from '@/types/common';
+import { checkAdmin } from '@/middlewares/checkRole';
+import { isAdmin } from '@/helper/role.helper';
 
 
 /**
@@ -223,14 +225,22 @@ export class CheckoutService {
    * @param orderId - Order ID
    * @returns Order with items and payments
    */
-  async getOrderById(userId: string, orderId: string): Promise<any> {
-    // TODO: Implement logic
-    // - Find order by ID
-    // - Verify order belongs to user
-    // - Include order items, payments, and events
-    // - Return order details
+  async getOrderById(userId: string, role: UserRole, orderId: string): Promise<Order> {
+    const isAdminUser = isAdmin(role);
 
-    return {};
+    const order = await prisma.order.findUnique({
+      where: {
+        id: orderId,
+      },
+      include: {
+        items: true,
+        payments: true,
+      },
+    });
+
+    if (!order) throw new NotFoundError('Order not found');
+    if (!isAdminUser && order.userId !== userId) throw new ForbiddenError('You are not authorized to access this order');
+    return order;
   }
 
   /**
