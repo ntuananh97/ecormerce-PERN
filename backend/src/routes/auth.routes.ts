@@ -18,7 +18,11 @@ router.post('/register', validate(createUserSchema), authController.register);
 // Validates email and password before authentication
 router.post('/login', validate(loginUserSchema), authController.login);
 
+
 // POST /api/auth/logout - Logout user
 router.post('/logout', authController.logout);
+
+// POST /api/auth/refresh-token - Refresh authentication token
+router.post('/refresh-token', authController.refreshToken);
 
 export default router;

@@ -25,9 +25,8 @@ export class AuthController {
    * Helper function to get cookie options for setting cookie
    * Returns secure cookie configuration with maxAge
    */
-  private getCookieOptions() {
+  private getCookieOptions(expiresIn: string) {
     // Parse JWT_EXPIRES_IN (e.g., "7d", "24h") to milliseconds
-    const expiresIn = env.JWT_EXPIRES_IN;
     let maxAge = 7 * 24 * 60 * 60 * 1000; // Default: 7 days in milliseconds
 
     if (expiresIn.endsWith('d')) {
@@ -67,7 +66,8 @@ export class AuthController {
     const result = await authService.login(req.body);
 
     // Set token in httpOnly cookie với các options bảo mật
-    res.cookie(env.COOKIE_NAME, result.token, this.getCookieOptions());
+    res.cookie(env.COOKIE_NAME, result.token, this.getCookieOptions(env.JWT_EXPIRES_IN));
+    res.cookie(env.RT_COOKIE_NAME, result.refreshToken, this.getCookieOptions(env.RT_EXPIRES_IN));
 
     res.status(200).json({
       success: true,
@@ -83,10 +83,27 @@ export class AuthController {
   logout = asyncHandler(async (_: Request, res: Response): Promise<void> => {
     // Clear the authentication cookie với options giống hệt lúc set cookie
     res.clearCookie(env.COOKIE_NAME, this.getBaseCookieOptions());
+    res.clearCookie(env.RT_COOKIE_NAME, this.getBaseCookieOptions());
 
     res.status(200).json({
       success: true,
       message: 'Logout successful',
+    });
+  });
+
+  /**
+   * POST /api/auth/refresh-token
+   * Refresh authentication token
+   */
+  refreshToken = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    // TODO: Implement refresh token logic
+    const { accessToken } = await authService.refreshToken(req.body);
+    res.cookie(env.COOKIE_NAME, accessToken, this.getCookieOptions(env.JWT_EXPIRES_IN));
+
+
+    res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
     });
   });
 }

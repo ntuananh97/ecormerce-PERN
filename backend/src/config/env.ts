@@ -15,6 +15,9 @@ const envSchema = z.object({
   JWT_SECRET: z.string(),
   JWT_EXPIRES_IN: z.string(),
   COOKIE_NAME: z.string().default('auth_token'),
+  RT_SECRET: z.string(),
+  RT_EXPIRES_IN: z.string(),
+  RT_COOKIE_NAME: z.string().default('refresh-token'),
 });
 
 /**

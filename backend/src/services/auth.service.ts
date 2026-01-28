@@ -1,8 +1,9 @@
 import { prisma } from '../config/database';
-import { env } from '../config/env';
-import { CreateUserInput, LoginUserInput, loginUserSchema } from '../types/user.types';
-import { ConflictError, ValidationError } from '../types/errors';
+import { CreateUserInput, LoginUserInput } from '../types/user.types';
+import { AppError, ConflictError, UnauthorizedError, ValidationError } from '../types/errors';
 import bcrypt from 'bcrypt';
+import { generateAccessToken, generateRefreshToken, ITokenPayload } from '../helper/login.helper';
+import { env } from 'process';
 import jwt from 'jsonwebtoken';
 
 /**
@@ -83,25 +84,26 @@ export class AuthService {
       throw new ValidationError(errorMessage);
     }
 
-    // 4. Generate JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      env.JWT_SECRET,
-      {
-        expiresIn: env.JWT_EXPIRES_IN,
-      } as jwt.SignOptions
-    );
+    // 4. Generate JWT tokens
+    const token = generateAccessToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
-    // 5. Return user data and token (exclude password)
+    const refreshToken = generateRefreshToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // 5. Return user data and tokens (exclude password)
     const { password: _, ...userWithoutPassword } = user;
 
     return {
       user: userWithoutPassword,
       token,
+      refreshToken,
     };
   }
 
@@ -116,6 +118,41 @@ export class AuthService {
     // - Perform any cleanup
     
     return;
+  }
+
+  /**
+   * Refresh authentication token
+   * @param data - Refresh token data
+   * @returns New authentication token
+   */
+  async refreshToken(data: { refreshToken: string }): Promise<any> {
+    // TODO: Implement refresh token logic
+    // - Verify refresh token
+    // - Generate new access token
+    // - Return new token
+
+    const rtSecret = env.RT_SECRET;
+    const rtExpiresIn = env.RT_EXPIRES_IN;
+    if (!rtSecret || !rtExpiresIn) {
+      throw new AppError('Refresh token secret or expires in is not set');
+    }
+
+
+    const rtDecoded = jwt.verify(data.refreshToken, rtSecret) as ITokenPayload;
+
+    if (!rtDecoded) {
+      throw new UnauthorizedError('Invalid refresh token');
+    }
+
+   const newAccessToken = generateAccessToken({
+    userId: rtDecoded.userId,
+    email: rtDecoded.email,
+    role: rtDecoded.role,
+   });
+    
+    return {
+      accessToken: newAccessToken,
+    };
   }
 }
 
