@@ -2,7 +2,7 @@ import { IPaginatedResponse } from '@/types/common';
 import { prisma } from '../config/database';
 import { Prisma, Product, ProductStatus } from '@prisma/client';
 import { CreateProductInput, IProductParams, UpdateProductInput } from '@/types/products.types';
-import { NotFoundError } from '@/types/errors';
+import { BadRequestError, NotFoundError } from '@/types/errors';
 import { categoryService } from './category.service';
 
 /**
@@ -141,6 +141,60 @@ export class ProductService {
    */
   async deleteProduct(id: string): Promise<void> {
     await prisma.product.delete({ where: { id } });
+  }
+
+  /**
+   * Create multiple products at once
+   * @param products - Array of product data
+   * @returns Object with count and created products
+   */
+  async createMultipleProducts(products: CreateProductInput[]): Promise<{ count: number; products: Pick<Product, 'id' | 'name' | 'createdAt'>[] }> {
+    // Validate all categories exist if categoryId provided
+    const uniqueCategoryIds = [...new Set(products.map(p => p.categoryId).filter(Boolean) as string[])];
+
+    const existingCategories = await prisma.category.findMany({
+      where: {
+        id: { in: uniqueCategoryIds }
+      },
+      select: {
+        id: true,
+      }
+    });
+
+    const existingCategoryIds = new Set(existingCategories.map(c => c.id));
+
+    const invalidCategoryIds = uniqueCategoryIds.filter(id => !existingCategoryIds.has(id));
+    
+    if (invalidCategoryIds.length > 0) {
+      throw new BadRequestError(`Categories with IDs ${invalidCategoryIds.join(', ')} do not exist`);
+    }
+
+    // Prepare product data
+    const productsData = products.map(product => ({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      categoryId: product.categoryId,
+      images: product.images,
+      status: ProductStatus.active,
+    }));
+
+    // Create all products
+    const createdProducts = await prisma.product.createManyAndReturn({
+      data: productsData,
+      skipDuplicates: true,
+      select: {
+        id: true,
+        name: true,
+        createdAt: true
+      }
+    });
+
+    return {
+      count: createdProducts.length,
+      products: createdProducts,
+    };
   }
 }
 

@@ -3,7 +3,7 @@ import { productController } from '../controllers/product.controller';
 import { checkAuthentication } from '@/middlewares/checkAuth';
 import { checkAdmin } from '@/middlewares/checkRole';
 import { validate } from '@/middlewares/validation';
-import { createProductSchema, updateProductSchema, validateProductQuery } from '@/types/products.types';
+import { createProductSchema, createMultipleProductsSchema, updateProductSchema, validateProductQuery } from '@/types/products.types';
 
 const router = Router();
 
@@ -21,6 +21,10 @@ router.get('/:id', productController.getProductById);
 // POST /api/products - Create new product
 router.post('/', checkAuthentication, checkAdmin,
      validate(createProductSchema), productController.createProduct);
+
+// POST /api/products/multiple - Create multiple products at once
+router.post('/multiple', checkAuthentication, checkAdmin,
+     validate(createMultipleProductsSchema), productController.createMultipleProducts);
 
 // PUT /api/products/:id - Update product
 router.put('/:id', checkAuthentication, checkAdmin, validate(updateProductSchema),

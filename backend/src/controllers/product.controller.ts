@@ -84,6 +84,20 @@ export class ProductController {
       message: 'Product deleted successfully',
     });
   });
+
+  /**
+   * POST /api/products/multiple
+   * Create multiple products at once
+   */
+  createMultipleProducts = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const result = await productService.createMultipleProducts(req.body.products);
+
+    res.status(201).json({
+      success: true,
+      message: `${result.count} products created successfully`,
+      data: result,
+    });
+  });
 }
 
 // Export singleton instance
