@@ -62,6 +62,14 @@ export const queryKeys = {
     all: ['auth'] as const,
     user: () => [...queryKeys.auth.all, 'user'] as const,
   },
-  
-  // Add more query keys as needed
+
+  // Categories
+  categories: {
+    all: ['categories'] as const,
+    lists: () => [...queryKeys.categories.all, 'list'] as const,
+    list: () => [...queryKeys.categories.lists()] as const,
+    details: () => [...queryKeys.categories.all, 'detail'] as const,
+    detail: (id: string | number) =>
+      [...queryKeys.categories.details(), id] as const,
+  },
 } as const;

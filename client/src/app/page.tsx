@@ -23,7 +23,7 @@ export default function HomePage() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/#featured">
+                <Link href="/products">
                   Shop Now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

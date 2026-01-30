@@ -8,12 +8,10 @@ import axiosInstance from '@/lib/axios';
 import { API_ENDPOINTS } from '@/constants/api.constants';
 import type {
   ApiResponse,
-  Product,
-  CreateProductRequest,
-  UpdateProductRequest,
   PaginatedResponse,
   PaginationParams,
 } from '@/types/api.types';
+import { ICreateProductRequest, IProduct, IUpdateProductRequest } from '@/types/product.types';
 
 /**
  * Products Service
@@ -24,9 +22,9 @@ export const productsService = {
    * Get paginated list of products
    */
   async getProducts(
-    params?: PaginationParams & { search?: string; category?: string }
-  ): Promise<PaginatedResponse<Product>> {
-    const response = await axiosInstance.get<ApiResponse<PaginatedResponse<Product>>>(
+    params?: PaginationParams & { name?: string; category?: string }
+  ): Promise<PaginatedResponse<IProduct>> {
+    const response = await axiosInstance.get<ApiResponse<PaginatedResponse<IProduct>>>(
       API_ENDPOINTS.PRODUCTS.LIST,
       { params }
     );
@@ -36,8 +34,8 @@ export const productsService = {
   /**
    * Get single product by ID
    */
-  async getProduct(id: string | number): Promise<Product> {
-    const response = await axiosInstance.get<ApiResponse<Product>>(
+  async getProduct(id: string | number): Promise<IProduct> {
+    const response = await axiosInstance.get<ApiResponse<IProduct>>(
       API_ENDPOINTS.PRODUCTS.DETAIL(id)
     );
     return response.data.data;
@@ -46,8 +44,8 @@ export const productsService = {
   /**
    * Create new product
    */
-  async createProduct(data: CreateProductRequest): Promise<Product> {
-    const response = await axiosInstance.post<ApiResponse<Product>>(
+  async createProduct(data: ICreateProductRequest): Promise<IProduct> {
+    const response = await axiosInstance.post<ApiResponse<IProduct>>(
       API_ENDPOINTS.PRODUCTS.CREATE,
       data
     );
@@ -59,9 +57,9 @@ export const productsService = {
    */
   async updateProduct(
     id: string | number,
-    data: UpdateProductRequest
-  ): Promise<Product> {
-    const response = await axiosInstance.put<ApiResponse<Product>>(
+    data: IUpdateProductRequest
+  ): Promise<IProduct> {
+    const response = await axiosInstance.put<ApiResponse<IProduct>>(
       API_ENDPOINTS.PRODUCTS.UPDATE(id),
       data
     );

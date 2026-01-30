@@ -19,6 +19,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/products/${id}`,
     DELETE: (id: string | number) => `/products/${id}`,
   },
+  CATEGORIES: {
+    LIST: '/categories',
+    DETAIL: (id: string | number) => `/categories/${id}`,
+  },
   USERS: {
     LIST: '/users',
     DETAIL: (id: string | number) => `/users/${id}`,

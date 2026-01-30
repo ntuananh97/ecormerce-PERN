@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { getProductById, formatPrice, products } from "@/data/mockData";
 import { ProductCard } from "@/components/features/products/ProductCard";
+import { useProduct } from "@/hooks/useProducts";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -18,13 +19,13 @@ interface ProductPageProps {
 
 export default function ProductDetailPage({ params }: ProductPageProps) {
   const { id } = use(params);
-  const product = getProductById(id);
+  const { data: product } = useProduct(id);
   const [quantity, setQuantity] = useState(1);
 
   // Get related products (same category, excluding current product)
-  const relatedProducts = products
-    .filter((p) => p.category === product?.category && p.id !== id)
-    .slice(0, 3);
+  // const relatedProducts = products
+  //   .filter((p) => p.category === product?.category && p.id !== id)
+  //   .slice(0, 3);
 
   if (!product) {
     return (
@@ -87,7 +88,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
           <Image
-            src={product.image}
+            src={product.images}
             alt={product.name}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
@@ -110,7 +111,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
         <div className="flex flex-col">
           {/* Category */}
           <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            {product.category}
+            {product.category.name}
           </p>
 
           {/* Title */}
@@ -119,7 +120,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
           </h1>
 
           {/* Rating */}
-          <div className="mt-4 flex items-center gap-2">
+          {/* <div className="mt-4 flex items-center gap-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -135,11 +136,12 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             <span className="text-sm text-muted-foreground">
               {product.rating} out of 5
             </span>
-          </div>
+          </div> */}
 
           {/* Price */}
           <p className="mt-6 text-4xl font-bold text-foreground">
-            {formatPrice(product.price)}
+            {/* {formatPrice(product.price)} */}
+            {product.price}
           </p>
 
           <Separator className="my-6" />
@@ -207,7 +209,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               disabled={product.stock === 0}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
-              Add to Cart - {formatPrice(product.price * quantity)}
+              Add to Cart - {/* {formatPrice(product.price * quantity)} */} {Number(product.price) * quantity}
             </Button>
           </div>
 
@@ -225,7 +227,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
       </div>
 
       {/* Related Products */}
-      {relatedProducts.length > 0 && (
+      {/* {relatedProducts.length > 0 && (
         <section className="mt-16">
           <Separator className="mb-12" />
           <h2 className="text-2xl font-bold tracking-tight">
@@ -237,7 +239,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             ))}
           </div>
         </section>
-      )}
+      )} */}
     </div>
   );
 }

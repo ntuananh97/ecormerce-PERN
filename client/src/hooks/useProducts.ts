@@ -7,19 +7,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsService } from '@/services/products.service';
 import { queryKeys } from '@/lib/react-query';
 import type {
-  Product,
   PaginationParams,
-  CreateProductRequest,
-  UpdateProductRequest,
-  PaginatedResponse,
 } from '@/types/api.types';
+import { ICreateProductRequest, IUpdateProductRequest } from '@/types/product.types';
 
 /**
  * Hook to fetch paginated products list
  * @param params - Pagination and filter parameters
  */
 export function useProducts(
-  params?: PaginationParams & { search?: string; category?: string }
+  params?: PaginationParams & { name?: string; category?: string }
 ) {
   return useQuery({
     queryKey: queryKeys.products.list(params),
@@ -50,7 +47,7 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateProductRequest) =>
+    mutationFn: (data: ICreateProductRequest) =>
       productsService.createProduct(data),
     onSuccess: () => {
       // Invalidate products list to refetch with new product
@@ -68,7 +65,7 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string | number; data: UpdateProductRequest }) =>
+    mutationFn: ({ id, data }: { id: string | number; data: IUpdateProductRequest }) =>
       productsService.updateProduct(id, data),
     onSuccess: (updatedProduct) => {
       // Invalidate products list
@@ -114,7 +111,7 @@ export function useDeleteProduct() {
 export function usePrefetchProducts() {
   const queryClient = useQueryClient();
 
-  return (params?: PaginationParams & { search?: string; category?: string }) => {
+  return (params?: PaginationParams & { name?: string; category?: string }) => {
     queryClient.prefetchQuery({
       queryKey: queryKeys.products.list(params),
       queryFn: () => productsService.getProducts(params),

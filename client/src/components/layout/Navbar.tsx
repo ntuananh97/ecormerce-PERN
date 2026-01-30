@@ -16,7 +16,7 @@ export function Navbar({ cartItemCount = 0 }: NavbarProps) {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/#featured", label: "Shop" },
+    { href: "/products", label: "Products" },
   ];
 
   return (
