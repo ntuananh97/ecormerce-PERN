@@ -8,7 +8,7 @@ import { API_ENDPOINTS, ERROR_MESSAGES, HTTP_STATUS, STORAGE_KEYS } from '@/cons
 import type { ApiError, ApiResponse } from '@/types/api.types';
 
 // Base configuration
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 const TIMEOUT = Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 10000;
 
 /**
@@ -28,32 +28,32 @@ const axiosInstance: AxiosInstance = axios.create({
  * Request Interceptor
  * Attaches authentication token to every request
  */
-axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage (you can also use cookies or other storage)
-    const token = getAccessToken();
+// axiosInstance.interceptors.request.use(
+//   (config: InternalAxiosRequestConfig) => {
+//     // Get token from localStorage (you can also use cookies or other storage)
+//     const token = getAccessToken();
 
-    // Attach token to Authorization header if available
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+//     // Attach token to Authorization header if available
+//     if (token && config.headers) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
 
-    // Log request in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-        params: config.params,
-        data: config.data,
-      });
-    }
+//     // Log request in development
+//     if (process.env.NODE_ENV === 'development') {
+//       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
+//         params: config.params,
+//         data: config.data,
+//       });
+//     }
 
-    return config;
-  },
-  (error: AxiosError) => {
-    // Handle request error
-    console.error('[API Request Error]', error);
-    return Promise.reject(error);
-  }
-);
+//     return config;
+//   },
+//   (error: AxiosError) => {
+//     // Handle request error
+//     console.error('[API Request Error]', error);
+//     return Promise.reject(error);
+//   }
+// );
 
 /**
  * Response Interceptor

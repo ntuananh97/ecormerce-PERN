@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ProductCard } from "@/components/features/products/ProductCard";
-import { featuredProducts } from "@/data/mockData";
+import FeaturedProducts from "@/components/features/products/FeaturedProducts";
+
 
 export default function HomePage() {
   return (
@@ -44,37 +44,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products Section */}
-      <section id="featured" className="py-16 sm:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Featured Products
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              Handpicked selection of our most popular items. Each product is
-              carefully selected for quality and value.
-            </p>
-          </div>
-
-          {/* Product Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {/* View All Button */}
-          <div className="mt-12 text-center">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/#featured">
-                View All Products
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <FeaturedProducts />
 
       {/* Features Section */}
       <section className="border-t bg-muted/50 py-16">

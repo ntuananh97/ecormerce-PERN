@@ -4,7 +4,7 @@
  */
 
 // Base API Response Structure
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
@@ -63,26 +63,4 @@ export interface User {
   updatedAt: string;
 }
 
-// Product Types (Example)
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  imageUrl?: string;
-  category: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
-export interface CreateProductRequest {
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  category: string;
-  imageUrl?: string;
-}
-
-export interface UpdateProductRequest extends Partial<CreateProductRequest> {}

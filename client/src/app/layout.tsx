@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,15 +30,18 @@ export default function RootLayout({
   const cartItemCount = 3;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
-        <div className="flex min-h-screen flex-col">
-          <Navbar cartItemCount={cartItemCount} />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <QueryProvider>
+          <div className="flex min-h-screen flex-col">
+            <Navbar cartItemCount={cartItemCount} />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </QueryProvider>
       </body>
     </html>
   );
