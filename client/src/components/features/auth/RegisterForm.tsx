@@ -1,8 +1,8 @@
 /**
- * Login Form Component
+ * Register Form Component
  * Implements "Optimistic UI with Background Revalidation" pattern
  *
- * On successful login:
+ * On successful registration:
  * 1. Backend sets HttpOnly access_token cookie
  * 2. user_info cookie is set for SSR hydration
  * 3. Zustand store is updated
@@ -14,7 +14,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,22 +28,28 @@ import {
 } from '@/components/ui/card';
 
 interface FormData {
+  name: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 interface FormErrors {
+  name?: string;
   email?: string;
   password?: string;
+  confirmPassword?: string;
 }
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { register, isLoading, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState<FormData>({
+    name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -51,6 +57,12 @@ export function LoginForm() {
   // Client-side validation
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
+
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    }
 
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
@@ -60,6 +72,14 @@ export function LoginForm() {
 
     if (!formData.password) {
       errors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
     }
 
     setFormErrors(errors);
@@ -76,20 +96,18 @@ export function LoginForm() {
     }
 
     try {
-      await login({
+      await register({
+        name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
       });
 
       // Redirect to home on success
-      // The user will see their avatar immediately thanks to:
-      // 1. user_info cookie being set
-      // 2. Zustand store being updated
       router.push('/');
-      router.refresh(); // Refresh to ensure server components re-read the cookie
+      router.refresh();
     } catch (err) {
       // Error is already handled by the useAuth hook
-      console.error('Login failed:', err);
+      console.error('Registration failed:', err);
     }
   };
 
@@ -112,15 +130,38 @@ export function LoginForm() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">
-          Welcome back
+          Create an account
         </CardTitle>
         <CardDescription className="text-center">
-          Enter your credentials to access your account
+          Enter your information to get started
         </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {/* Name Field */}
+          <div className="space-y-2">
+            <label htmlFor="name" className="text-sm font-medium leading-none">
+              Full Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={handleChange}
+                disabled={isLoading}
+                className={`pl-10 ${formErrors.name ? 'border-destructive' : ''}`}
+              />
+            </div>
+            {formErrors.name && (
+              <p className="text-sm text-destructive">{formErrors.name}</p>
+            )}
+          </div>
+
           {/* Email Field */}
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium leading-none">
@@ -146,17 +187,9 @@ export function LoginForm() {
 
           {/* Password Field */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium leading-none">
-                Password
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-primary hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <label htmlFor="password" className="text-sm font-medium leading-none">
+              Password
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -175,6 +208,34 @@ export function LoginForm() {
             )}
           </div>
 
+          {/* Confirm Password Field */}
+          <div className="space-y-2">
+            <label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium leading-none"
+            >
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                disabled={isLoading}
+                className={`pl-10 ${formErrors.confirmPassword ? 'border-destructive' : ''}`}
+              />
+            </div>
+            {formErrors.confirmPassword && (
+              <p className="text-sm text-destructive">
+                {formErrors.confirmPassword}
+              </p>
+            )}
+          </div>
+
           {/* Server Error Message */}
           {error && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
@@ -189,21 +250,21 @@ export function LoginForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                Creating account...
               </>
             ) : (
-              'Sign in'
+              'Create account'
             )}
           </Button>
 
-          {/* Register Link */}
+          {/* Login Link */}
           <p className="text-sm text-muted-foreground text-center">
-            Don&apos;t have an account?{' '}
+            Already have an account?{' '}
             <Link
-              href="/register"
+              href="/login"
               className="text-primary font-medium hover:underline"
             >
-              Create account
+              Sign in
             </Link>
           </p>
         </CardFooter>
@@ -212,4 +273,4 @@ export function LoginForm() {
   );
 }
 
-export default LoginForm;
+export default RegisterForm;

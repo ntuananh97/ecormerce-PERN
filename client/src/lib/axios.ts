@@ -5,7 +5,8 @@
 
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { API_ENDPOINTS, ERROR_MESSAGES, HTTP_STATUS, STORAGE_KEYS } from '@/constants/api.constants';
-import type { ApiError, ApiResponse } from '@/types/api.types';
+import type { ApiError } from '@/types/api.types';
+import Cookies from 'js-cookie';
 
 // Base configuration
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -25,50 +26,11 @@ const axiosInstance: AxiosInstance = axios.create({
 });
 
 /**
- * Request Interceptor
- * Attaches authentication token to every request
- */
-// axiosInstance.interceptors.request.use(
-//   (config: InternalAxiosRequestConfig) => {
-//     // Get token from localStorage (you can also use cookies or other storage)
-//     const token = getAccessToken();
-
-//     // Attach token to Authorization header if available
-//     if (token && config.headers) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-
-//     // Log request in development
-//     if (process.env.NODE_ENV === 'development') {
-//       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-//         params: config.params,
-//         data: config.data,
-//       });
-//     }
-
-//     return config;
-//   },
-//   (error: AxiosError) => {
-//     // Handle request error
-//     console.error('[API Request Error]', error);
-//     return Promise.reject(error);
-//   }
-// );
-
-/**
  * Response Interceptor
  * Global error handling and token refresh logic
  */
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Log response in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-        status: response.status,
-        data: response.data,
-      });
-    }
-
     // Return the response data directly for cleaner service layer
     return response;
   },
@@ -84,121 +46,47 @@ axiosInstance.interceptors.response.use(
       });
     }
 
-    // Handle different error status codes
-    if (error.response) {
-      const { status } = error.response;
+    // Handle UNAUTHORIZED error (401)
+    if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+      // Prevent infinite retry loop
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
 
-      switch (status) {
-        case HTTP_STATUS.UNAUTHORIZED:
-          // Token expired - attempt to refresh
-          if (!originalRequest._retry) {
-            originalRequest._retry = true;
+        try {
+          // Attempt to refresh the token via API
+          // Tokens are in httpOnly cookies, no need to send anything
+          await axios.post(
+            `${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
+            {},
+            { withCredentials: true }
+          );
 
-            try {
-              // Attempt to refresh the token
-              const newToken = await refreshAccessToken();
-              
-              if (newToken && originalRequest.headers) {
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                return axiosInstance(originalRequest);
-              }
-            } catch (refreshError) {
-              // Refresh failed - clear auth and redirect to login
-              clearAuthData();
-              
-              // Redirect to login (only on client-side)
-              if (typeof window !== 'undefined') {
-                window.location.href = '/login';
-              }
-              
-              return Promise.reject(new Error(ERROR_MESSAGES.UNAUTHORIZED));
-            }
-          }
-          break;
-
-        case HTTP_STATUS.FORBIDDEN:
-          // User doesn't have permission
-          console.error(ERROR_MESSAGES.FORBIDDEN);
-          break;
-
-        case HTTP_STATUS.NOT_FOUND:
-          console.error(ERROR_MESSAGES.NOT_FOUND);
-          break;
-
-        case HTTP_STATUS.INTERNAL_SERVER_ERROR:
-        case HTTP_STATUS.BAD_GATEWAY:
-        case HTTP_STATUS.SERVICE_UNAVAILABLE:
-          console.error(ERROR_MESSAGES.SERVER_ERROR);
-          break;
+          // Refresh successful, retry the original request
+          // Cookies will be automatically sent with the retried request
+          return axiosInstance(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed - clear auth data and redirect to login
+          
+          return Promise.reject(new Error(ERROR_MESSAGES.UNAUTHORIZED));
+        }
       }
-    } else if (error.code === 'ECONNABORTED') {
-      // Request timeout
-      console.error(ERROR_MESSAGES.TIMEOUT);
-    } else if (error.message === 'Network Error') {
-      // Network error
-      console.error(ERROR_MESSAGES.NETWORK_ERROR);
     }
 
-    // Return a structured error
+    // Return a structured error for all other cases
     return Promise.reject(formatError(error));
   }
 );
 
 /**
- * Helper: Get access token from storage
- */
-function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-}
-
-/**
- * Helper: Get refresh token from storage
- */
-function getRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-}
-
-/**
- * Helper: Refresh access token
- */
-async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = getRefreshToken();
-  
-  if (!refreshToken) {
-    throw new Error('No refresh token available');
-  }
-
-  try {
-    const response = await axios.post<ApiResponse<{ accessToken: string }>>(
-      `${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
-      { refreshToken },
-      { withCredentials: true }
-    );
-
-    const newAccessToken = response.data.data.accessToken;
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
-    }
-
-    return newAccessToken;
-  } catch (error) {
-    console.error('[Token Refresh Failed]', error);
-    throw error;
-  }
-}
-
-/**
  * Helper: Clear authentication data
+ * Only clears user data from localStorage as tokens are managed by httpOnly cookies
  */
 function clearAuthData(): void {
   if (typeof window === 'undefined') return;
   
-  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.USER);
+  // Only clear user data, tokens are in httpOnly cookies
+  Cookies.remove(STORAGE_KEYS.USER_INFO, { path: '/' });
+
 }
 
 /**
@@ -217,17 +105,11 @@ function formatError(error: AxiosError<ApiError>): ApiError {
 }
 
 /**
- * Public API for managing tokens (used by auth service)
+ * Public API for managing authentication data
+ * Note: Tokens are managed by httpOnly cookies on the server side
  */
-export const tokenManager = {
-  getAccessToken,
-  getRefreshToken,
-  setTokens: (accessToken: string, refreshToken: string) => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-  },
-  clearTokens: clearAuthData,
+export const authManager = {
+  clearAuthData,
 };
 
 export default axiosInstance;

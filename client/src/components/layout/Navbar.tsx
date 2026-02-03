@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useUserStore, useIsAuthenticated, useIsHydrated } from "@/stores/userStore";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavbarProps {
   cartItemCount?: number;
@@ -13,6 +21,26 @@ interface NavbarProps {
 
 export function Navbar({ cartItemCount = 0 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Use Zustand store for authentication state
+  const user = useUserStore((state) => state.user);
+  console.log("user", user);
+  
+  const isAuthenticated = useIsAuthenticated();
+  const isHydrated = useIsHydrated();
+
+  // Use useAuth hook for logout (handles clearing store, cache, and redirect)
+  const { logout, isLoading: isLoggingOut } = useAuth();
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsMobileMenuOpen(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -44,7 +72,7 @@ export function Navbar({ cartItemCount = 0 }: NavbarProps) {
             ))}
           </div>
 
-          {/* Cart & Mobile Menu Button */}
+          {/* Cart & Auth & Mobile Menu Button */}
           <div className="flex items-center gap-4">
             <Link href="/cart" className="relative">
               <Button variant="ghost" size="icon" aria-label="Shopping cart">
@@ -59,6 +87,58 @@ export function Navbar({ cartItemCount = 0 }: NavbarProps) {
                 </Badge>
               )}
             </Link>
+
+            {/* Auth Section - Only show after hydration to prevent flash */}
+            {!isHydrated ? (
+              // Skeleton while hydrating
+              <div className="hidden md:block h-8 w-8 rounded-full bg-muted animate-pulse" />
+            ) : !isAuthenticated ? (
+              <div className="hidden md:flex items-center gap-2 text-sm">
+                <Link
+                  href="/register"
+                  className="font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Register
+                </Link>
+                <span className="text-muted-foreground">|</span>
+                <Link
+                  href="/login"
+                  className="font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Login
+                </Link>
+              </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer relative"
+                    aria-label="User menu"
+                    disabled={isLoggingOut}
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                        {user?.name || <User className="h-4 w-4" />}
+                      </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {/* User info header */}
+                  <div className="px-2 py-1.5 text-sm font-medium border-b mb-1">
+                    {user?.name || "User"}
+                  </div>
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {isLoggingOut ? "Logging out..." : "Logout"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -92,6 +172,42 @@ export function Navbar({ cartItemCount = 0 }: NavbarProps) {
                   {link.label}
                 </Link>
               ))}
+              {/* Mobile Auth Links */}
+              {isHydrated && !isAuthenticated ? (
+                <>
+                  <Link
+                    href="/register"
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Register
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </>
+              ) : isHydrated && isAuthenticated ? (
+                <>
+                  {/* User info in mobile menu */}
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                    <span className="text-sm font-medium">{user?.name || "User"}</span>
+                  </div>
+                  <button
+                    className="text-left text-sm font-medium text-red-600 transition-colors hover:text-red-700 disabled:opacity-50"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? "Logging out..." : "Logout"}
+                  </button>
+                </>
+              ) : null}
             </div>
           </div>
         )}

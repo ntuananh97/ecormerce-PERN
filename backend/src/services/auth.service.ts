@@ -1,6 +1,6 @@
 import { prisma } from '../config/database';
 import { CreateUserInput, LoginUserInput } from '../types/user.types';
-import { AppError, ConflictError, UnauthorizedError, ValidationError } from '../types/errors';
+import { AppError, ConflictError, NotFoundError, UnauthorizedError, ValidationError } from '../types/errors';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken, ITokenPayload } from '../helper/login.helper';
 import { env } from 'process';
@@ -153,6 +153,39 @@ export class AuthService {
     return {
       accessToken: newAccessToken,
     };
+  }
+
+  /**
+   * Get current user information
+   * @param userId - User ID from JWT token
+   * @returns User data without password
+   */
+  async getCurrentUser(userId: string): Promise<any> {
+    // Find user by ID
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        name: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Check if user is soft deleted or blocked
+    if (user.deletedAt || user.status === 'blocked') {
+      throw new UnauthorizedError('User account is not active');
+    }
+
+    return user;
   }
 }
 

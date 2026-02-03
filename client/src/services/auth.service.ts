@@ -1,10 +1,15 @@
 /**
  * Authentication Service
  * Handles all authentication-related API calls
- * Demonstrates proper service layer pattern with strict typing
+ * Implements "Optimistic UI with Background Revalidation" pattern
+ *
+ * Security Strategy:
+ * - access_token: Managed by backend via HttpOnly cookies (automatic, secure)
+ * - user_info: Standard cookie with non-sensitive data for SSR hydration
  */
 
-import axiosInstance, { tokenManager } from '@/lib/axios';
+import Cookies from 'js-cookie';
+import axiosInstance from '@/lib/axios';
 import { API_ENDPOINTS, STORAGE_KEYS } from '@/constants/api.constants';
 import type {
   ApiResponse,
@@ -12,7 +17,30 @@ import type {
   RegisterRequest,
   AuthResponse,
   User,
+  UserInfo,
 } from '@/types/api.types';
+
+/**
+ * Cookie configuration for user_info
+ */
+const USER_INFO_COOKIE_OPTIONS: Cookies.CookieAttributes = {
+  expires: 7, // 7 days
+  path: '/',
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production',
+};
+
+/**
+ * Helper: Extract UserInfo from full User object
+ * Only includes non-sensitive data for the visible cookie
+ */
+function extractUserInfo(user: User): UserInfo {
+  return {
+    id: user.id,
+    name: user.name,
+ 
+  };
+}
 
 /**
  * Auth Service
@@ -22,6 +50,9 @@ import type {
 export const authService = {
   /**
    * Login user with email and password
+   * On success:
+   * 1. Backend sets HttpOnly access_token cookie automatically
+   * 2. We save user_info to a standard cookie for SSR hydration
    */
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response = await axiosInstance.post<ApiResponse<AuthResponse>>(
@@ -29,15 +60,19 @@ export const authService = {
       credentials
     );
 
-    const { user, accessToken, refreshToken } = response.data.data;
+    const { user } = response.data.data;
 
-    // Store tokens
-    tokenManager.setTokens(accessToken, refreshToken);
+    // Store tokens (for backward compatibility)
 
-    // Store user data
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    }
+    // CRITICAL: Save user_info to standard cookie for SSR hydration
+    const userInfo = extractUserInfo(user);
+    Cookies.set(
+      STORAGE_KEYS.USER_INFO,
+      JSON.stringify(userInfo),
+      USER_INFO_COOKIE_OPTIONS
+    );
+
+   
 
     return response.data.data;
   },
@@ -51,21 +86,18 @@ export const authService = {
       userData
     );
 
-    const { user, accessToken, refreshToken } = response.data.data;
+    
 
-    // Store tokens
-    tokenManager.setTokens(accessToken, refreshToken);
 
-    // Store user data
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    }
+
+   
 
     return response.data.data;
   },
 
   /**
    * Logout user
+   * Clears both HttpOnly cookie (via API) and user_info cookie
    */
   async logout(): Promise<void> {
     try {
@@ -74,16 +106,16 @@ export const authService = {
       // Even if the API call fails, we still clear local data
       console.error('Logout error:', error);
     } finally {
-      // Clear tokens and user data
-      tokenManager.clearTokens();
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(STORAGE_KEYS.USER);
-      }
+      // Remove user_info cookie
+      Cookies.remove(STORAGE_KEYS.USER_INFO, { path: '/' });
+
+      
     }
   },
 
   /**
-   * Get current authenticated user
+   * Get current authenticated user from API
+   * Used for background revalidation
    */
   async getCurrentUser(): Promise<User> {
     const response = await axiosInstance.get<ApiResponse<User>>(
@@ -91,29 +123,53 @@ export const authService = {
     );
 
     const user = response.data.data;
-
-    // Update stored user data
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    }
-
     return user;
   },
 
   /**
    * Check if user is authenticated (client-side only)
+   * Checks for user_info cookie presence
    */
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
-    return !!tokenManager.getAccessToken();
+    return !!Cookies.get(STORAGE_KEYS.USER_INFO);
   },
 
   /**
-   * Get stored user data (client-side only)
+   * Get user info from cookie (client-side only)
+   */
+  getUserInfoFromCookie(): UserInfo | null {
+    if (typeof window === 'undefined') return null;
+
+    const userInfoStr = Cookies.get(STORAGE_KEYS.USER_INFO);
+    if (!userInfoStr) return null;
+
+    try {
+      return JSON.parse(userInfoStr) as UserInfo;
+    } catch (error) {
+      console.error('Failed to parse user_info cookie:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Update user_info cookie
+   * Called when background revalidation finds updated data
+   */
+  updateUserInfoCookie(userInfo: UserInfo): void {
+    Cookies.set(
+      STORAGE_KEYS.USER_INFO,
+      JSON.stringify(userInfo),
+      USER_INFO_COOKIE_OPTIONS
+    );
+  },
+
+  /**
+   * Get stored user data from localStorage (client-side only)
    */
   getStoredUser(): User | null {
     if (typeof window === 'undefined') return null;
-    
+
     const userStr = localStorage.getItem(STORAGE_KEYS.USER);
     if (!userStr) return null;
 

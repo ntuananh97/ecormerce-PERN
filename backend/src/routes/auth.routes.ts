@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { validate } from '../middlewares/validation';
 import { createUserSchema, loginUserSchema } from '../types/user.types';
+import { checkAuthentication } from '../middlewares/checkAuth';
 
 const router = Router();
 
@@ -24,5 +25,9 @@ router.post('/logout', authController.logout);
 
 // POST /api/auth/refresh-token - Refresh authentication token
 router.post('/refresh-token', authController.refreshToken);
+
+// GET /api/auth/me - Get current user information
+// Requires authentication
+router.get('/me', checkAuthentication, authController.getCurrentUser);
 
 export default router;

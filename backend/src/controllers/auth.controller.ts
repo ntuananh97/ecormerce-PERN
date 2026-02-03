@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler';
 import { authService } from '../services/auth.service';
 import { env } from '../config/env';
+import { ExtendedRequest } from '../types/express';
 
 /**
  * Auth Controller Layer
@@ -104,6 +105,31 @@ export class AuthController {
     res.status(200).json({
       success: true,
       message: 'Token refreshed successfully',
+    });
+  });
+
+  /**
+   * GET /api/auth/me
+   * Get current authenticated user information
+   */
+  getCurrentUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const extReq = req as ExtendedRequest;
+    const userId = extReq.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+      return;
+    }
+
+    const user = await authService.getCurrentUser(userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'User retrieved successfully',
+      data: user,
     });
   });
 }

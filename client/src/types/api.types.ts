@@ -63,4 +63,13 @@ export interface User {
   updatedAt: string;
 }
 
+/**
+ * User info stored in the visible cookie for SSR hydration
+ * Contains only non-sensitive data for UI persistence
+ */
+export interface UserInfo {
+  id: string;
+  name: string;
+}
+
 
