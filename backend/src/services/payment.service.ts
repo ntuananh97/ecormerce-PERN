@@ -1,7 +1,8 @@
-import { CreatePaymentInput } from '@/types/payment.types';
+import { CreatePaymentInput, IPaymentParams } from '@/types/payment.types';
 import { prisma } from '../config/database';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus, Payment, PaymentStatus } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '@/types/errors';
+import { IPaginatedResponse } from '@/types/common';
 
 /**
  * Payment Service Layer
@@ -70,6 +71,54 @@ export class PaymentService {
       status: payment.status,
       orderId: payment.orderId,
       paymentId: payment.id,
+    };
+  }
+
+  /**
+   * Get payments for a user (payment history)
+   * @param userId - User ID
+   * @param params - Query params (pagination, sorting)
+   * @returns Paginated payment records with order info
+   */
+  async getPayments(userId: string, params: IPaymentParams): Promise<IPaginatedResponse<Payment & { order: { id: string; status: OrderStatus } }>> {
+    const { page, limit, sort, sortOrder } = params;
+    const skip = (page - 1) * limit;
+    const orderBy: Record<string, 'asc' | 'desc'> = {
+      [sort]: sortOrder,
+    };
+
+    const where = {
+      order: {
+        userId,
+      },
+    };
+
+    const [payments, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          order: {
+            select: {
+              id: true,
+              status: true,
+            },
+          },
+        },
+      }),
+      prisma.payment.count({ where }),
+    ]);
+
+    return {
+      data: payments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

@@ -78,4 +78,27 @@ export const queryKeys = {
     all: ['cart'] as const,
     me: () => [...queryKeys.cart.all, 'me'] as const,
   },
+
+  // Checkout & Orders
+  checkout: {
+    all: ['checkout'] as const,
+    session: () => [...queryKeys.checkout.all, 'session'] as const,
+  },
+  orders: {
+    all: ['orders'] as const,
+    lists: () => [...queryKeys.orders.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.orders.lists(), filters] as const,
+    details: () => [...queryKeys.orders.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.orders.details(), id] as const,
+  },
+
+  // Payments
+  payments: {
+    all: ['payments'] as const,
+    lists: () => [...queryKeys.payments.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.payments.lists(), filters] as const,
+    status: (id: string) => [...queryKeys.payments.all, 'status', id] as const,
+  },
 } as const;

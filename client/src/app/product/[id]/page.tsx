@@ -3,7 +3,7 @@
 import { useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Star, Truck } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Star, Truck, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -230,7 +230,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           </div>
 
-          {/* Add to Cart Button */}
+          {/* Add to Cart & Buy Now Buttons */}
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Button
               size="lg"
@@ -240,6 +240,18 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               {isAdding ? 'Adding to Cart...' : `Add to Cart - $${Number(product.price) * quantity}`}
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="secondary"
+              className="flex-1"
+              disabled={product.stock === 0}
+            >
+              <Link href={`/checkout?mode=DIRECT&productId=${product.id}&quantity=${quantity}`}>
+                <Zap className="mr-2 h-5 w-5" />
+                Buy Now
+              </Link>
             </Button>
           </div>
 

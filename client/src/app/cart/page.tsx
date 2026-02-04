@@ -312,8 +312,10 @@ export default function CartPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
-              <Button className="w-full" size="lg">
-                Proceed to Checkout
+              <Button asChild className="w-full" size="lg">
+                <Link href={`/checkout?mode=CART&cartItemIds=${cartItems.map(item => item.id).join(',')}`}>
+                  Proceed to Checkout
+                </Link>
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 Secure checkout powered by Stripe

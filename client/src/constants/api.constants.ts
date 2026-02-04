@@ -34,6 +34,17 @@ export const API_ENDPOINTS = {
     UPDATE_ITEM: (id: string) => `/carts/items/${id}`,
     REMOVE_ITEM: (id: string) => `/carts/items/${id}`,
   },
+  CHECKOUT: {
+    CREATE_SESSION: '/checkout',
+    CREATE_ORDER: '/checkout/create-order',
+    ORDERS: '/checkout/orders',
+    ORDER_DETAIL: (id: string) => `/checkout/orders/${id}`,
+  },
+  PAYMENTS: {
+    LIST: '/payments',
+    CREATE: '/payments',
+    STATUS: (id: string) => `/payments/${id}/status`,
+  },
 } as const;
 
 // HTTP Status Codes

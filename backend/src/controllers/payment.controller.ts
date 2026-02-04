@@ -37,6 +37,30 @@ export class PaymentController {
       data: result,
     });
   });
+
+  /**
+   * GET /api/payments
+   * Get payment history for the authenticated user
+   */
+  getPayments = asyncHandler(async (req: ExtendedRequest, res: Response): Promise<void> => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const sort = (req.query.sort as string) || 'createdAt';
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+    const result = await paymentService.getPayments(req.user!.id, {
+      page,
+      limit,
+      sort,
+      sortOrder,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Payments retrieved successfully',
+      ...result,
+    });
+  });
 }
 
 // Export singleton instance

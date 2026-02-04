@@ -8,13 +8,16 @@ const router = Router();
 
 /**
  * Payment Routes
- * All routes are prefixed with /api/payment
+ * All routes are prefixed with /api/payments
  */
 
-// POST /api/payment - Create payment
+// GET /api/payments - Get payment history
+router.get('/', checkAuthentication, paymentController.getPayments);
+
+// POST /api/payments - Create payment
 router.post('/', checkAuthentication, validate(createPaymentSchema), paymentController.createPayment);
 
-// GET /api/payment/:id/status - Get payment status
+// GET /api/payments/:id/status - Get payment status
 router.get('/:id/status', checkAuthentication, paymentController.getPaymentStatus);
 
 // TODO: Need webhook to update payment status

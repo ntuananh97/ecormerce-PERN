@@ -267,6 +267,9 @@ export class CheckoutService {
         skip,
         take: limit,
         orderBy,
+        include: {
+          items: true,
+        },
       }),
       prisma.order.count({ where }),
     ]);

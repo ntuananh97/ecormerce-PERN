@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, CreditCard, Package } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUserStore, useIsAuthenticated, useIsHydrated } from "@/stores/userStore";
@@ -127,6 +128,19 @@ export function Navbar() {
                   <div className="px-2 py-1.5 text-sm font-medium border-b mb-1">
                     {user?.name || "User"}
                   </div>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/orders">
+                      <Package className="mr-2 h-4 w-4" />
+                      Orders
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/payments">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Payment History
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600 focus:text-red-600"
                     onClick={handleLogout}
@@ -198,6 +212,22 @@ export function Navbar() {
                       </div>
                     <span className="text-sm font-medium">{user?.name || "User"}</span>
                   </div>
+                  <Link
+                    href="/orders"
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Package className="h-4 w-4" />
+                    Orders
+                  </Link>
+                  <Link
+                    href="/payments"
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Payment History
+                  </Link>
                   <button
                     className="text-left text-sm font-medium text-red-600 transition-colors hover:text-red-700 disabled:opacity-50"
                     onClick={handleLogout}

@@ -8,3 +8,11 @@ export const createPaymentSchema = z.object({
 });
 
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>['body'];
+
+// Get payments query params
+export interface IPaymentParams {
+    page: number;
+    limit: number;
+    sort: string;
+    sortOrder: 'asc' | 'desc';
+}
