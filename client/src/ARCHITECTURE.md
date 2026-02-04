@@ -18,6 +18,9 @@ src/
 │   │   └── card.tsx        # Card component
 │   └── features/           # Domain-specific components
 │       ├── auth/           # Authentication components
+│       │   └── UserInitializer.tsx # Hydrates user store on mount
+│       ├── cart/           # Shopping cart components
+│       │   └── CartInitializer.tsx # Loads cart on mount
 │       └── products/       # Product components
 │
 ├── lib/                    # Third-party library configurations
@@ -30,14 +33,22 @@ src/
 │
 ├── services/              # API Service Layer (Business Logic)
 │   ├── auth.service.ts   # Authentication API calls
+│   ├── cart.service.ts   # Cart operations (localStorage + API)
 │   └── products.service.ts # Products API calls
 │
 ├── hooks/                 # Custom React Hooks
 │   ├── useAuth.ts        # Authentication hook
+│   ├── useCart.ts        # Cart operations hook
 │   └── useProducts.ts    # Product queries hook (React Query)
 │
 ├── types/                 # TypeScript Type Definitions
-│   └── api.types.ts      # API request/response types
+│   ├── api.types.ts      # API request/response types
+│   ├── cart.types.ts     # Cart-related types
+│   └── product.types.ts  # Product-related types
+│
+├── stores/               # Zustand State Management
+│   ├── userStore.ts     # User authentication state
+│   └── cartStore.ts     # Shopping cart state
 │
 └── constants/            # Static Configuration
     └── api.constants.ts  # API endpoints, error messages
@@ -101,6 +112,181 @@ async login(credentials: LoginRequest): Promise<AuthResponse> {
   );
   return response.data.data;
 }
+```
+
+## 🛒 Shopping Cart Architecture
+
+### 1. **Hybrid Cart System**
+
+The cart system supports both **guest users** (localStorage) and **authenticated users** (server API):
+
+```
+┌─────────────────────────────────────────┐
+│         Cart Architecture               │
+├─────────────────────────────────────────┤
+│                                         │
+│  Guest User           Authenticated     │
+│  (Not logged in)      (Logged in)       │
+│       │                     │            │
+│       ▼                     ▼            │
+│  localStorage            Server API      │
+│  (guest_cart)           (/carts/me)      │
+│       │                     │            │
+│       └──────┬──────────────┘            │
+│              ▼                           │
+│         cartStore.ts                     │
+│         (Zustand)                        │
+│              │                           │
+│              ▼                           │
+│          Navbar                          │
+│      (Cart Badge)                        │
+└─────────────────────────────────────────┘
+```
+
+### 2. **Cart Components**
+
+**CartInitializer** (`components/features/cart/CartInitializer.tsx`):
+- Runs on application mount
+- Loads guest cart from localStorage for non-authenticated users
+- Loads server cart via API for authenticated users
+- Automatically syncs with auth state changes
+
+**Integration in Layout**:
+```typescript
+// app/layout.tsx
+<QueryProvider>
+  <UserInitializer initialUser={initialUser} />
+  <CartInitializer />  {/* Initializes cart after user */}
+  <Navbar />
+</QueryProvider>
+```
+
+### 3. **Cart State Management (Zustand)**
+
+**cartStore.ts** manages global cart state:
+
+```typescript
+import { useCartStore, useCartItemCount, useCartTotal } from '@/stores/cartStore';
+
+// In any component
+const cartItemCount = useCartItemCount();  // Get total item count
+const cartTotal = useCartTotal();          // Get total price
+const items = useCartItems();              // Get all items
+```
+
+### 4. **Cart Service Layer**
+
+**cart.service.ts** provides three services:
+
+1. **guestCartService** - localStorage operations for guest users
+   - `getCart()`, `addItem()`, `updateItem()`, `removeItem()`, `clearCart()`
+
+2. **authenticatedCartService** - API calls for logged-in users
+   - `getCart()`, `addItem()`, `updateItem()`, `removeItem()`
+
+3. **cartService** - Unified helpers
+   - `clearLocalCart()` - Clear localStorage (used on logout)
+   - `loadCartFromServer()` - Load from API (used on login)
+
+### 5. **Cart Hook**
+
+**useCart** hook (`hooks/useCart.ts`) provides a unified interface:
+
+```typescript
+import { useCart } from '@/hooks/useCart';
+
+function ProductCard({ product }) {
+  const { addToCart, isLoading } = useCart();
+
+  const handleAddToCart = async () => {
+    await addToCart(product.id, 1, {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      images: product.images,
+      stock: product.stock,
+    });
+  };
+
+  return (
+    <button onClick={handleAddToCart} disabled={isLoading}>
+      Add to Cart
+    </button>
+  );
+}
+```
+
+### 6. **Login/Logout Cart Flow**
+
+**On Login:**
+```typescript
+// useAuth.ts - login()
+1. User logs in successfully
+2. Load cart from server (overwrite local state)
+3. Clear guest cart from localStorage
+4. Update cartStore with server cart items
+```
+
+**On Logout:**
+```typescript
+// useAuth.ts - logout()
+1. User logs out
+2. Clear cartStore
+3. Clear localStorage guest_cart
+4. Cart starts fresh for next guest session
+```
+
+### 7. **Cart Data Types**
+
+```typescript
+// types/cart.types.ts
+
+// Authenticated cart item (has server-generated id)
+interface CartItem {
+  id: string;           // Server-generated ID
+  productId: string;
+  quantity: number;
+  product: CartProductInfo;
+}
+
+// Guest cart item (no server ID)
+type GuestCartItem = Omit<CartItem, 'id'>;
+```
+
+### 8. **Usage Examples**
+
+**Display cart count in Navbar:**
+```typescript
+import { useCartItemCount } from '@/stores/cartStore';
+
+export function Navbar() {
+  const cartItemCount = useCartItemCount();
+
+  return (
+    <Badge>{cartItemCount}</Badge>
+  );
+}
+```
+
+**Add product to cart:**
+```typescript
+const { addToCart, isLoading } = useCart();
+
+await addToCart(productId, quantity, productInfo);
+```
+
+**Update cart item quantity:**
+```typescript
+const { updateQuantity } = useCart();
+
+await updateQuantity(itemId, newQuantity);
+```
+
+**Remove item from cart:**
+```typescript
+const { removeFromCart } = useCart();
+
+await removeFromCart(itemId);
 ```
 
 ## 🔐 Authentication Flow
@@ -221,6 +407,10 @@ export const queryKeys = {
     details: () => [...queryKeys.products.all, 'detail'] as const,
     detail: (id: string | number) =>
       [...queryKeys.products.details(), id] as const,
+  },
+  cart: {
+    all: ['cart'] as const,
+    me: () => [...queryKeys.cart.all, 'me'] as const,
   },
 };
 ```

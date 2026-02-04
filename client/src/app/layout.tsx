@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { UserInitializer } from "@/components/features/auth/UserInitializer";
+import { CartInitializer } from "@/components/features/cart/CartInitializer";
 import { STORAGE_KEYS } from "@/constants/api.constants";
 import type { UserInfo } from "@/types/api.types";
 
@@ -50,8 +51,6 @@ export default async function RootLayout({
   const userInfoCookie = cookieStore.get(STORAGE_KEYS.USER_INFO);
   const initialUser = parseUserInfo(userInfoCookie?.value);
 
-  // Mock cart item count - in a real app this would come from state/context
-  const cartItemCount = 3;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -62,8 +61,10 @@ export default async function RootLayout({
         <QueryProvider>
           {/* UserInitializer hydrates the store and triggers background revalidation */}
           <UserInitializer initialUser={initialUser} />
+          {/* CartInitializer loads cart on mount (guest or authenticated) */}
+          <CartInitializer />
           <div className="flex min-h-screen flex-col">
-            <Navbar cartItemCount={cartItemCount} />
+            <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>

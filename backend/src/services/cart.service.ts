@@ -207,6 +207,8 @@ export class CartService {
       }
     });
 
+    if (!cartItem) throw new NotFoundError('Cart item not found');
+
     // Check if cart item belongs to user
     if (cartItem?.cart.userId !== userId) throw new ForbiddenError('You do not have permission to remove this item from cart');
 

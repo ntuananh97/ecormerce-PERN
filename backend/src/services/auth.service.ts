@@ -144,10 +144,22 @@ export class AuthService {
       throw new UnauthorizedError('Invalid refresh token');
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: rtDecoded.userId }
+    });
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (user.deletedAt || user.status === 'blocked') {
+      throw new UnauthorizedError('User account is not active');
+    }
+
    const newAccessToken = generateAccessToken({
-    userId: rtDecoded.userId,
-    email: rtDecoded.email,
-    role: rtDecoded.role,
+    userId: user.id,
+    email: user.email,
+    role: user.role,
    });
     
     return {

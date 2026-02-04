@@ -1,11 +1,15 @@
+'use client';
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import FeaturedProducts from "@/components/features/products/FeaturedProducts";
+import { useCartItemCount } from "@/stores/cartStore";
 
 
 export default function HomePage() {
+  const cartItemCount = useCartItemCount();
   return (
     <>
       {/* Hero Section */}
@@ -21,6 +25,13 @@ export default function HomePage() {
               Explore our curated collection of high-quality products designed
               for modern living. From tech essentials to lifestyle accessories.
             </p>
+            
+            {/* Cart Count Display */}
+            {cartItemCount > 0 && (
+              <p className="mt-4 text-slate-300">
+                You have {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} in your cart
+              </p>
+            )}
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href="/products">
@@ -34,7 +45,9 @@ export default function HomePage() {
                 size="lg"
                 className="w-full border-slate-600 bg-transparent text-white hover:bg-slate-800 hover:text-white sm:w-auto"
               >
-                <Link href="/cart">View Cart</Link>
+                <Link href="/cart">
+                  View Cart {cartItemCount > 0 && `(${cartItemCount})`}
+                </Link>
               </Button>
             </div>
           </div>

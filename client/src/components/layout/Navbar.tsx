@@ -13,21 +13,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUserStore, useIsAuthenticated, useIsHydrated } from "@/stores/userStore";
+import { useCartItemCount } from "@/stores/cartStore";
 import { useAuth } from "@/hooks/useAuth";
 
-interface NavbarProps {
-  cartItemCount?: number;
-}
-
-export function Navbar({ cartItemCount = 0 }: NavbarProps) {
+export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Use Zustand store for authentication state
   const user = useUserStore((state) => state.user);
-  console.log("user", user);
   
   const isAuthenticated = useIsAuthenticated();
   const isHydrated = useIsHydrated();
+
+  // Use cart store for cart item count
+  const cartItemCount = useCartItemCount();
 
   // Use useAuth hook for logout (handles clearing store, cache, and redirect)
   const { logout, isLoading: isLoggingOut } = useAuth();

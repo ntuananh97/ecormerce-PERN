@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { getProductById, formatPrice, products } from "@/data/mockData";
 import { ProductCard } from "@/components/features/products/ProductCard";
 import { useProduct } from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -21,6 +22,8 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const { id } = use(params);
   const { data: product } = useProduct(id);
   const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+  const { addToCart } = useCart();
 
   // Get related products (same category, excluding current product)
   // const relatedProducts = products
@@ -59,6 +62,32 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const incrementQuantity = () => {
     if (quantity < product.stock) {
       setQuantity(quantity + 1);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    setIsAdding(true);
+    try {
+      const productInfo = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+        stock: product.stock,
+      };
+
+      await addToCart(product.id, quantity, productInfo);
+      
+      // Optional: Show success message
+      console.log(`Added ${quantity} ${product.name} to cart!`);
+      setQuantity(1); // Reset quantity
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      // Optional: Show error message
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -206,10 +235,11 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             <Button
               size="lg"
               className="flex-1"
-              disabled={product.stock === 0}
+              disabled={product.stock === 0 || isAdding}
+              onClick={handleAddToCart}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
-              Add to Cart - {/* {formatPrice(product.price * quantity)} */} {Number(product.price) * quantity}
+              {isAdding ? 'Adding to Cart...' : `Add to Cart - $${Number(product.price) * quantity}`}
             </Button>
           </div>
 

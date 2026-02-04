@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
 import { getDefaultsQueryParams } from "@/lib/utils";
+import { IProduct } from "@/types/product.types";
 
 const defaultQueryParams = getDefaultsQueryParams();
 
@@ -13,6 +15,25 @@ const FeaturedProducts = () => {
   // Fetch products using React Query
   const { data: paginatedProducts, isLoading, isError, error } = useProducts(defaultQueryParams);
   const products = paginatedProducts?.data || [];
+  
+  // Cart hook for adding products
+  const { addToCart } = useCart();
+
+  // Handle add to cart
+  const handleAddToCart = async (product: IProduct) => {
+    try {
+      await addToCart(product.id, 1, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+        stock: product.stock,
+      });
+      console.log(`${product.name} added to cart!`);
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+    }
+  };
 
 
   return (
@@ -51,7 +72,11 @@ const FeaturedProducts = () => {
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                />
               ))}
             </div>
 

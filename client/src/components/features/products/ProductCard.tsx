@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
@@ -12,6 +13,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { IProduct } from "@/types/product.types";
+import { useCart } from "@/hooks/useCart";
 
 // Helper function to format price
 const formatPrice = (price: number): string => {
@@ -23,16 +25,39 @@ const formatPrice = (price: number): string => {
 
 interface ProductCardProps {
   product: IProduct;
-  onAddToCart?: (product: IProduct) => void;
 }
 
 const RATING_MAX = 5;
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const handleAddToCart = (e: React.MouseEvent) => {
+export function ProductCard({ product }: ProductCardProps) {
+  const { addToCart, isLoading } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onAddToCart?.(product);
+    
+    setIsAdding(true);
+    try {
+      // Tạo CartProductInfo từ product
+      const productInfo = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+        stock: product.stock,
+      };
+
+      await addToCart(product.id, 1, productInfo);
+      
+      // Optional: Hiện toast success (có thể thêm toast library sau)
+      console.log('Added to cart successfully!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      // Optional: Hiện toast error
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   // Get image URL (support both 'image' and 'imageUrl' fields)
@@ -100,11 +125,11 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           <Button
             size="sm"
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
+            disabled={product.stock === 0 || isAdding}
             aria-label={`Add ${product.name} to cart`}
           >
             <ShoppingCart className="mr-1 h-4 w-4" />
-            Add
+            {isAdding ? 'Adding...' : 'Add'}
           </Button>
         </CardFooter>
       </Card>

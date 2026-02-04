@@ -28,6 +28,12 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string | number) => `/users/${id}`,
     UPDATE: (id: string | number) => `/users/${id}`,
   },
+  CART: {
+    ME: '/carts/me',
+    ADD_ITEM: '/carts/items',
+    UPDATE_ITEM: (id: string) => `/carts/items/${id}`,
+    REMOVE_ITEM: (id: string) => `/carts/items/${id}`,
+  },
 } as const;
 
 // HTTP Status Codes
@@ -63,4 +69,5 @@ export const STORAGE_KEYS = {
   REFRESH_TOKEN: 'refresh_token',
   USER: 'user',
   USER_INFO: 'user_info', // Standard cookie for SSR hydration (non-sensitive data)
+  GUEST_CART: 'guest_cart', // Guest cart stored in localStorage
 } as const;

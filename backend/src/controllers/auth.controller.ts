@@ -3,6 +3,7 @@ import { asyncHandler } from '../middlewares/errorHandler';
 import { authService } from '../services/auth.service';
 import { env } from '../config/env';
 import { ExtendedRequest } from '../types/express';
+import { UnauthorizedError } from '@/types/errors';
 
 /**
  * Auth Controller Layer
@@ -98,7 +99,11 @@ export class AuthController {
    */
   refreshToken = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // TODO: Implement refresh token logic
-    const { accessToken } = await authService.refreshToken(req.body);
+    const refreshToken = req.cookies[env.RT_COOKIE_NAME];
+    if (!refreshToken) {
+      throw new UnauthorizedError('Refresh token not found');
+    }
+    const { accessToken } = await authService.refreshToken({ refreshToken });
     res.cookie(env.COOKIE_NAME, accessToken, this.getCookieOptions(env.JWT_EXPIRES_IN));
 
 

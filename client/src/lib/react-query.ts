@@ -72,4 +72,10 @@ export const queryKeys = {
     detail: (id: string | number) =>
       [...queryKeys.categories.details(), id] as const,
   },
+
+  // Cart
+  cart: {
+    all: ['cart'] as const,
+    me: () => [...queryKeys.cart.all, 'me'] as const,
+  },
 } as const;
