@@ -75,7 +75,6 @@ const FeaturedProducts = () => {
                 <ProductCard 
                   key={product.id} 
                   product={product}
-                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>

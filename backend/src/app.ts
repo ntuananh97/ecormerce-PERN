@@ -1,8 +1,10 @@
 import express, { Application } from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFoundHandler } from './middlewares/notFound';
 import routes from './routes';
+import { corsOptions, logCorsConfig } from './config/cors.config';
 
 /**
  * Create and configure Express application
@@ -10,25 +12,16 @@ import routes from './routes';
 export const createApp = (): Application => {
   const app = express();
 
+  // CORS middleware - must be before other middleware
+  app.use(cors(corsOptions));
+  logCorsConfig();
+
   // Cookie parser middleware
   app.use(cookieParser());
 
   // Body parser middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
-  // CORS middleware (simple setup for development)
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    
-    next();
-  });
 
   // API routes
   app.use('/api', routes);

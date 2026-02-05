@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import userRoutes from './user.routes';
 import authRoutes from './auth.routes';
-import projectRoutes from './project.routes';
 import categoryRoutes from './category.routes';
 import productRoutes from './product.routes';
 import cartRoutes from './cart.routes';
@@ -29,9 +28,6 @@ router.use('/auth', authRoutes);
 
 // User routes
 router.use('/users', userRoutes);
-
-// Project routes
-router.use('/projects', projectRoutes);
 
 // Category routes
 router.use('/categories', categoryRoutes);

@@ -79,7 +79,7 @@ export function useCreateOrder() {
  */
 export function useOrders(params?: IOrderQueryParams) {
   return useQuery({
-    queryKey: queryKeys.orders.list(params),
+    queryKey: queryKeys.orders.list(params as Record<string, unknown> | undefined),
     queryFn: () => checkoutService.getOrders(params),
   });
 }

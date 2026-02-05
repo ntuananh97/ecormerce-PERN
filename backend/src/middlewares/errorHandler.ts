@@ -9,10 +9,10 @@ import { ZodError } from 'zod';
  */
 export const errorHandler = (
   err: Error,
-  req: Request,
+  _: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   console.error('Error:', err);
 

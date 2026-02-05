@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { asyncHandler } from '../middlewares/errorHandler';
 import { ExtendedRequest } from '@/types/express';
 import { cartService } from '@/services/cart.service';

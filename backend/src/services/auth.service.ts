@@ -111,7 +111,7 @@ export class AuthService {
    * Logout user
    * @param data - Logout data (token, userId, etc.)
    */
-  async logout(data: any): Promise<void> {
+  async logout(_: any): Promise<void> {
     // TODO: Implement logout logic
     // - Invalidate token (if using token blacklist)
     // - Clear session (if using sessions)

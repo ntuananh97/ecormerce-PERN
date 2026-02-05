@@ -223,7 +223,7 @@ export class CartService {
    * Clear entire cart (remove all items)
    * @param userId - User ID
    */
-  async clearCart(userId: string): Promise<void> {
+  async clearCart(_: string): Promise<void> {
     // TODO: Implement logic
     // - Get user's cart
     // - Delete all cart items

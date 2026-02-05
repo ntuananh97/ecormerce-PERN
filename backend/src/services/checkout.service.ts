@@ -3,7 +3,6 @@ import { prisma } from '../config/database';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@/types/errors';
 import { Order, OrderStatus, Prisma, ProductStatus, UserRole } from '@prisma/client';
 import { IPaginatedResponse } from '@/types/common';
-import { checkAdmin } from '@/middlewares/checkRole';
 import { isAdmin } from '@/helper/role.helper';
 
 
@@ -292,7 +291,7 @@ export class CheckoutService {
    * @param data - Payment data (provider, amount, etc.)
    * @returns Payment record
    */
-  async processPayment(userId: string, orderId: string, data: any): Promise<any> {
+  async processPayment(_: string, __: string, ___: any): Promise<any> {
     // TODO: Implement logic
     // - Find order by ID
     // - Verify order belongs to user

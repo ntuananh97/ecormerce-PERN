@@ -87,7 +87,7 @@ export interface IOrder {
 }
 
 // Order Query Params
-export interface IOrderQueryParams {
+export interface IOrderQueryParams extends Record<string, unknown> {
   page?: number;
   limit?: number;
   sort?: string;
