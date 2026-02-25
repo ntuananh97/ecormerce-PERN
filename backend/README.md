@@ -9,6 +9,7 @@ A professional and scalable backend boilerplate built with modern technologies a
 - **PostgreSQL** - Robust relational database
 - **Prisma** - Next-generation ORM
 - **Zod** - TypeScript-first schema validation
+- **Mastra** - Framework for building AI agents and workflows
 - **Dotenv** - Environment variable management
 
 ## 📁 Project Structure
@@ -22,6 +23,7 @@ backend/
 │   ├── routes/          # API route definitions
 │   ├── middlewares/     # Express middlewares (error handling, validation)
 │   ├── types/           # TypeScript types and Zod schemas
+│   ├── mastra/          # AI Agent configuration, agents, and tools
 │   ├── app.ts           # Express app configuration
 │   └── server.ts        # Server entry point
 ├── prisma/
@@ -107,6 +109,15 @@ Base URL: `http://localhost:5000/api`
   }
   ```
 - **DELETE** `/api/users/:id` - Delete user
+
+### AI Agent
+- **POST** `/api/agent/chat` - Chat with the agent to look up order information
+  ```json
+  {
+    "message": "Show me list of orders"
+  }
+  ```
+  *Requires authentication via cookie.*
 
 ## 🏗️ Architecture Highlights
 

@@ -6,6 +6,7 @@ import productRoutes from './product.routes';
 import cartRoutes from './cart.routes';
 import checkoutRoutes from './checkout.routes';
 import paymentRoutes from './payment.routes';
+import agentRoutes from './agent.routes';
 
 const router = Router();
 
@@ -43,5 +44,8 @@ router.use('/checkout', checkoutRoutes);
 
 // Payment routes
 router.use('/payments', paymentRoutes);
+
+// Agent routes
+router.use('/agent', agentRoutes);
 
 export default router;

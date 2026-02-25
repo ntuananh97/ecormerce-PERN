@@ -12,6 +12,7 @@ This document provides a comprehensive list of all available API endpoints in th
 - [Cart](#cart)
 - [Checkout](#checkout)
 - [Payments](#payments)
+- [AI Agent](#ai-agent)
 
 ---
 
@@ -100,3 +101,9 @@ This document provides a comprehensive list of all available API endpoints in th
 | :--- | :--- | :--- | :---: |
 | `POST` | `/` | Create and process a payment for an order. | Yes |
 | `GET` | `/:id/status` | Retrieve the current status of a payment. | Yes |
+
+## AI Agent (`/agent`)
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/chat` | Chat with the AI agent to look up order information. | Yes |
