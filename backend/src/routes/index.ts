@@ -7,6 +7,7 @@ import cartRoutes from './cart.routes';
 import checkoutRoutes from './checkout.routes';
 import paymentRoutes from './payment.routes';
 import agentRoutes from './agent.routes';
+import knowledgeRoutes from './knowledge.routes';
 
 const router = Router();
 
@@ -47,5 +48,8 @@ router.use('/payments', paymentRoutes);
 
 // Agent routes
 router.use('/agent', agentRoutes);
+
+// Knowledge base routes
+router.use('/knowledge', knowledgeRoutes);
 
 export default router;

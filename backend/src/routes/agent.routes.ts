@@ -1,16 +1,18 @@
 import { Router } from 'express';
 import { agentController } from '../controllers/agent.controller';
-import { checkAuthentication } from '@/middlewares/checkAuth';
+import { optionalAuthentication } from '@/middlewares/checkAuth';
 
 const router = Router();
 
 /**
  * Agent Routes
  * All routes are prefixed with /api/agent
- * All routes require authentication
+ * Authentication is optional: authenticated users can access all features
+ * (order lookup + product search), unauthenticated users can only use
+ * public features (product stock lookup).
  */
 
-// POST /api/agent/chat - Send a message to the order support agent
-router.post('/chat', checkAuthentication, agentController.chat);
+// POST /api/agent/chat - Send a message to the support agent
+router.post('/chat', optionalAuthentication, agentController.chat);
 
 export default router;

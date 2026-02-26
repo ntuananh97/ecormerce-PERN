@@ -13,6 +13,7 @@ This document provides a comprehensive list of all available API endpoints in th
 - [Checkout](#checkout)
 - [Payments](#payments)
 - [AI Agent](#ai-agent)
+- [Knowledge Base](#knowledge-base)
 
 ---
 
@@ -107,3 +108,39 @@ This document provides a comprehensive list of all available API endpoints in th
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
 | `POST` | `/chat` | Chat with the AI agent to look up order information. | Yes |
+
+## Knowledge Base (`/knowledge`)
+
+Endpoints for managing the RAG vector knowledge base used by the AI agent.
+
+| Method | Endpoint | Description | Auth Required | Admin Only |
+| :--- | :--- | :--- | :---: | :---: |
+| `POST` | `/ingest` | Ingest a text document into the vector knowledge base. | Yes | Yes |
+
+### POST `/knowledge/ingest`
+
+Accepts a plain-text document, splits it into chunks, generates 1536-dim embeddings via OpenAI `text-embedding-3-small`, and stores each chunk with its embedding vector in the `knowledge_base` table (pgvector).
+
+**Request body:**
+```json
+{
+  "content": "Your document text here...",
+  "metadata": { "source": "return-policy", "tags": ["returns", "shipping"] }
+}
+```
+
+| Field | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `content` | `string` | Yes | The raw text of the document to be ingested. |
+| `metadata` | `object` | No | Arbitrary JSON metadata attached to every chunk (e.g. source, tags). |
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Document ingested successfully",
+  "data": {
+    "chunksCount": 12
+  }
+}
+```

@@ -54,3 +54,42 @@ export const checkAuthentication = async (
     }
   }
 };
+
+/**
+ * Optional authentication middleware
+ * Attempts to validate JWT token from cookies. If a valid token is present,
+ * attaches user to request. If token is missing or invalid, continues without
+ * setting req.user (does NOT reject the request).
+ * Use for routes that have both public and authenticated functionality.
+ */
+export const optionalAuthentication = (
+  req: Request,
+  _: Response,
+  next: NextFunction
+): void => {
+  try {
+    const token = req.cookies[env.COOKIE_NAME];
+
+    if (!token) {
+      return next();
+    }
+
+    const decoded = jwt.verify(token, env.JWT_SECRET) as {
+      userId: string;
+      email: string;
+      role: string;
+    };
+
+    if (decoded.userId && decoded.email) {
+      (req as ExtendedRequest).user = {
+        id: decoded.userId,
+        email: decoded.email,
+        role: decoded.role as unknown as UserRole,
+      };
+    }
+  } catch {
+    // Invalid or expired token — silently ignore and proceed as unauthenticated
+  }
+
+  next();
+};

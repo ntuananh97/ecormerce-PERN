@@ -5,11 +5,13 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
 }
 
 
@@ -185,4 +187,32 @@ model OrderEvent {
   order     Order    @relation(fields: [orderId], references: [id])
 
   @@map("order_events")
+}
+
+// --------------------------------------
+// 9. KNOWLEDGE BASE (RAG / Vector Search)
+// --------------------------------------
+
+/// Stores knowledge base data for AI semantic search (RAG)
+model KnowledgeBase {
+  /// Primary key, auto-generated UUID
+  id        String   @id @default(uuid())
+
+  /// 1536-dimensional vector embedding (compatible with OpenAI text-embedding-3-small / ada-002).
+  /// Used for semantic similarity search (cosine / L2) via pgvector,
+  /// enabling the AI to retrieve the most relevant content chunks for a given query.
+  embedding Unsupported("vector(1536)")?
+
+  /// Additional JSONB metadata: document source, content type, tags,
+  /// chunk index, etc. Used for filtering and tracing search results.
+  metadata  Json?    @db.JsonB
+
+  /// The original text content corresponding to the vector embedding.
+  /// This is the actual text returned to the AI after a similarity search.
+  content   String   @db.Text
+
+  /// Timestamp when the record was created, used for sorting and managing stale data.
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("knowledge_base")
 }

@@ -7,18 +7,20 @@ import { mastra } from '../mastra';
  */
 export class AgentService {
   /**
-   * Send a chat message to the order support agent and get a response.
+   * Send a chat message to the support agent and get a response.
    * The userId is passed via RequestContext so tools can securely query
    * only the authenticated user's data.
    * @param userId - Authenticated user's ID
    * @param message - The user's chat message
    * @returns The agent's text response
    */
-  async chat(userId: string, message: string): Promise<{ text: string }> {
+  async chat(userId: string | undefined, message: string): Promise<{ text: string }> {
     const requestContext = new RequestContext<{ userId: string }>();
-    requestContext.set('userId', userId);
+    if (userId) {
+      requestContext.set('userId', userId);
+    }
 
-    const agent = mastra.getAgent('orderAgent');
+    const agent = mastra.getAgent('supportAgent');
 
     const result = await agent.generate(message, {
       requestContext,

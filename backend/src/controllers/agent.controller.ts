@@ -22,7 +22,7 @@ export class AgentController {
       throw new BadRequestError('Message is required.');
     }
 
-    const result = await agentService.chat(req.user!.id, message.trim());
+    const result = await agentService.chat(req.user?.id, message.trim());
 
     res.status(200).json({
       success: true,

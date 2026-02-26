@@ -44,4 +44,5 @@ mastra.db-wal
 
 # Mastra generated files
 .agents/
+.mastra/
 
