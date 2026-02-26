@@ -45,6 +45,9 @@ export const API_ENDPOINTS = {
     CREATE: '/payments',
     STATUS: (id: string) => `/payments/${id}/status`,
   },
+  AGENT: {
+    CHAT: '/agent/chat',
+  },
 } as const;
 
 // HTTP Status Codes

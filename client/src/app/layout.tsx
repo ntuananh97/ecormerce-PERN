@@ -10,6 +10,7 @@ import { UserInitializer } from "@/components/features/auth/UserInitializer";
 import { CartInitializer } from "@/components/features/cart/CartInitializer";
 import { STORAGE_KEYS } from "@/constants/api.constants";
 import type { UserInfo } from "@/types/api.types";
+import { ChatWidget } from "@/components/features/chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,6 +69,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <ChatWidget />
         </QueryProvider>
       </body>
     </html>
