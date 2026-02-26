@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useState } from 'react';
 import { chatService } from '@/services/chat.service';
+import type { ConversationMessage } from '@/services/chat.service';
 import type { ChatContextValue, ChatMessage } from '@/types/chat.types';
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -30,7 +31,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      const response = await chatService.sendMessage(text);
+      const history: ConversationMessage[] = [...messages, userMessage]
+        .filter((m) => m.id !== 'welcome')
+        .map((m) => ({
+          role: m.role === 'bot' ? 'assistant' : 'user',
+          content: m.content,
+        }));
+
+        console.log('history', history);
+
+      const response = await chatService.sendMessage(history);
 
       const botMessage: ChatMessage = {
         id: `bot-${Date.now()}`,
@@ -52,7 +62,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [messages]);
 
   const clearMessages = useCallback(() => {
     setMessages([WELCOME_MESSAGE]);

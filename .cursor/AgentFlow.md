@@ -19,12 +19,13 @@ sequenceDiagram
     participant Agent as SupportAgent
     participant DB as PostgreSQL (Prisma)
 
-    User->>Express: { message: "..." }
+    User->>Express: { messages: [{role, content}...] }
     Express->>OptAuth: Check JWT from Cookies (optional)
     OptAuth->>Controller: req.user = { id, role } or undefined
-    Controller->>Service: chat(userId?, message)
+    Controller->>Controller: Validate array, last msg must be user
+    Controller->>Service: chat(userId?, messages[])
     Service->>Mastra: getAgent("supportAgent")
-    Service->>Agent: generate(message, { requestContext: { userId? } })
+    Service->>Agent: generate(messages[], { requestContext: { userId? } })
     Agent-->>Mastra: Synthesized Text Result
     Mastra-->>Service: result.text
     Service-->>Controller: { text }

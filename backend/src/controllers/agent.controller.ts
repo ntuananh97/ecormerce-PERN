@@ -3,6 +3,7 @@ import { asyncHandler } from '../middlewares/errorHandler';
 import { ExtendedRequest } from '@/types/express';
 import { agentService } from '@/services/agent.service';
 import { BadRequestError } from '@/types/errors';
+import type { ConversationMessage } from '@/types/agent.types';
 
 /**
  * Agent Controller Layer
@@ -11,18 +12,25 @@ import { BadRequestError } from '@/types/errors';
 export class AgentController {
   /**
    * POST /api/agent/chat
-   * Send a message to the order support agent and receive a response.
-   * Requires authentication. The authenticated user's ID is forwarded
-   * to the agent via RequestContext for secure data access.
+   * Send a conversation history to the support agent and receive a response.
+   * The authenticated user's ID is forwarded via RequestContext for secure data access.
+   * The client is responsible for maintaining conversation state; backend does not persist history.
    */
   chat = asyncHandler(async (req: ExtendedRequest, res: Response): Promise<void> => {
-    const { message } = req.body as { message?: string };
+    const { messages } = req.body as { messages?: ConversationMessage[] };
 
-    if (!message || typeof message !== 'string' || message.trim() === '') {
-      throw new BadRequestError('Message is required.');
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new BadRequestError('messages must be a non-empty array.');
     }
 
-    const result = await agentService.chat(req.user?.id, message.trim());
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role !== 'user' || !lastMessage.content?.trim()) {
+      throw new BadRequestError('The last message must be a non-empty user message.');
+    }
+
+   
+
+    const result = await agentService.chat(req.user?.id, messages);
 
     res.status(200).json({
       success: true,
