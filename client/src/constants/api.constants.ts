@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
   },
   AGENT: {
     CHAT: '/agent/chat',
+    CHAT_STREAM: '/agent/chat/stream',
   },
 } as const;
 

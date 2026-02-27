@@ -30,36 +30,66 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
+    const botId = `bot-${Date.now()}`;
+    const botPlaceholder: ChatMessage = {
+      id: botId,
+      role: 'bot',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true,
+      toolStatus: undefined,
+    };
+
+    setMessages((prev) => [...prev, botPlaceholder]);
+
+    const history: ConversationMessage[] = [...messages, userMessage]
+      .filter((m) => m.id !== 'welcome')
+      .map((m) => ({
+        role: m.role === 'bot' ? 'assistant' : 'user',
+        content: m.content,
+      }));
+
     try {
-      const history: ConversationMessage[] = [...messages, userMessage]
-        .filter((m) => m.id !== 'welcome')
-        .map((m) => ({
-          role: m.role === 'bot' ? 'assistant' : 'user',
-          content: m.content,
-        }));
-
-        console.log('history', history);
-
-      const response = await chatService.sendMessage(history);
-
-      const botMessage: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        role: 'bot',
-        content: response.text,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
+      await chatService.sendMessageStream(history, {
+        onStep: (_, message) => {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === botId ? { ...m, toolStatus: message } : m)),
+          );
+        },
+        onDelta: (chunk) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botId ? { ...m, content: m.content + chunk } : m,
+            ),
+          );
+        },
+        onDone: () => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botId ? { ...m, isStreaming: false, toolStatus: undefined } : m,
+            ),
+          );
+          setIsLoading(false);
+        },
+        onError: (message) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botId
+                ? { ...m, content: message || 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.', isStreaming: false, toolStatus: undefined }
+                : m,
+            ),
+          );
+          setIsLoading(false);
+        },
+      });
     } catch {
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'bot',
-        content: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === botId
+            ? { ...m, content: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.', isStreaming: false, toolStatus: undefined }
+            : m,
+        ),
+      );
       setIsLoading(false);
     }
   }, [messages]);

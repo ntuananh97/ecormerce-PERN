@@ -2,19 +2,23 @@
 
 This document summarizes the current implementation of the AI Support Agent, using the Mastra framework. The agent supports three features: order lookup (requires authentication), product stock lookup (public), and FAQ / store policy lookup via semantic vector search (public).
 
+The agent exposes two endpoints:
+- `POST /api/agent/chat` — Classic REST response (waits for full answer, returns JSON).
+- `POST /api/agent/chat/stream` — Server-Sent Events (SSE) response (streams intermediate steps + text tokens in real-time).
+
 ## 🏗️ Architecture Overview
 
 The agent is integrated into the Express backend as a general-purpose support service. Authentication is optional — authenticated users can access all features, while unauthenticated users can use public features only.
 
-### Common Request Flow
+### REST Request Flow (`POST /api/agent/chat`)
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Express as POST /api/agent/chat
     participant OptAuth as optionalAuthentication
-    participant Controller as AgentController
-    participant Service as AgentService
+    participant Controller as AgentController.chat
+    participant Service as AgentService.chat
     participant Mastra as Mastra Engine
     participant Agent as SupportAgent
     participant DB as PostgreSQL (Prisma)
@@ -30,6 +34,49 @@ sequenceDiagram
     Mastra-->>Service: result.text
     Service-->>Controller: { text }
     Controller-->>User: { success: true, data: { text } }
+```
+
+### SSE Streaming Flow (`POST /api/agent/chat/stream`)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Express as POST /api/agent/chat/stream
+    participant OptAuth as optionalAuthentication
+    participant Controller as AgentController.chatStream
+    participant Service as AgentService.chatStream
+    participant Agent as SupportAgent
+
+    User->>Express: { messages: [{role, content}...] }
+    Express->>OptAuth: Check JWT from Cookies (optional)
+    OptAuth->>Controller: req.user = { id, role } or undefined
+    Controller->>Controller: Validate + set SSE headers
+    Controller->>Service: chatStream(userId?, messages[], res)
+    Service->>Agent: stream(messages[], { requestContext: { userId? } })
+
+    loop fullStream iteration
+        Agent-->>Service: chunk (tool-call / text-delta / finish / error)
+        Service-->>Controller: sendSSE(res, event)
+        Controller-->>User: data JSON SSE event
+    end
+```
+
+**SSE Event types:**
+
+| `type` | Payload | When sent |
+| :--- | :--- | :--- |
+| `step` | `{ toolName, message }` | When a tool is being called |
+| `delta` | `{ text }` | Each text token streamed |
+| `done` | — | Stream finished successfully |
+| `error` | `{ message }` | An error occurred |
+
+Example events:
+```
+data: {"type":"step","data":{"toolName":"searchProducts","message":"Đang gọi searchProducts..."}}
+
+data: {"type":"delta","data":{"text":"Tìm"}}
+
+data: {"type":"done"}
 ```
 
 ### Order Lookup Flow (requires authentication)
@@ -100,9 +147,10 @@ sequenceDiagram
 
 | Component | Location | Responsibility |
 | :--- | :--- | :--- |
-| **Route** | `src/routes/agent.routes.ts` | Entry point for `/api/agent/chat`. Uses optional auth. |
-| **Controller** | `src/controllers/agent.controller.ts` | Handles HTTP request validation and response formatting. |
-| **Service** | `src/services/agent.service.ts` | Orchestrates the Mastra agent call with optional `RequestContext`. |
+| **Route** | `src/routes/agent.routes.ts` | Entry points for `/api/agent/chat` and `/api/agent/chat/stream`. Uses optional auth. |
+| **Controller** | `src/controllers/agent.controller.ts` | `chat` handler (JSON) and `chatStream` handler (SSE). |
+| **Service** | `src/services/agent.service.ts` | `chat()` uses `agent.generate()`. `chatStream()` uses `agent.stream()` + writes SSE events. |
+| **SSE Types** | `src/types/agent.types.ts` | `SSEEvent` union type (`step`, `delta`, `done`, `error`). |
 | **Agent Config** | `src/mastra/agents/support-agent.ts` | Defines `supportAgent`, Vietnamese instructions, and tool bindings. |
 | **Order Tools** | `src/mastra/tools/order-tools.ts` | `getMyOrders` and `getOrderDetail` — require authenticated userId. |
 | **Product Tools** | `src/mastra/tools/product-tools.ts` | `searchProducts` and `checkProductStock` — public, no auth needed. |
@@ -146,4 +194,4 @@ sequenceDiagram
 - **Vietnamese Support:** The agent is configured with Vietnamese instructions for tone and formatting.
 - **Model:** Currently using `openai/gpt-4o-mini`.
 - **RAG Integration:** Done — `searchFAQ` tool added for FAQ / store policy lookup via pgvector semantic search.
-- **Streaming:** (Planned) Switching from `generate()` to `stream()` for better UX.
+- **Streaming:** Done — `POST /api/agent/chat/stream` streams intermediate tool steps and text tokens via SSE.

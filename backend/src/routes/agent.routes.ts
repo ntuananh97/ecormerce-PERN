@@ -12,7 +12,10 @@ const router = Router();
  * public features (product stock lookup).
  */
 
-// POST /api/agent/chat - Send a message to the support agent
+// POST /api/agent/chat - Send a message to the support agent (REST, returns full JSON)
 router.post('/chat', optionalAuthentication, agentController.chat);
+
+// POST /api/agent/chat/stream - Stream a support agent response via SSE
+router.post('/chat/stream', optionalAuthentication, agentController.chatStream);
 
 export default router;

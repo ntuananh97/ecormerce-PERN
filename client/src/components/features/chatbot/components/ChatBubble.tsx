@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Bot, User } from 'lucide-react';
 import type { ChatMessage } from '@/types/chat.types';
+import TypingIndicator from './TypingIndicator';
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -35,7 +36,9 @@ export function ChatBubble({ message }: ChatBubbleProps) {
             : 'rounded-bl-sm border border-zinc-200 bg-white text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100',
         )}
       >
-        <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+        <p className="whitespace-pre-wrap leading-relaxed">
+          {message.isStreaming && <TypingIndicator />}
+          {message.content || message.toolStatus}</p>
         <p
           className={cn(
             'mt-1 text-right text-[10px]',

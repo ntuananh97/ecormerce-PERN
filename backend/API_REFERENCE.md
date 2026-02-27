@@ -107,7 +107,56 @@ This document provides a comprehensive list of all available API endpoints in th
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `POST` | `/chat` | Chat with the AI agent to look up order information. | Yes |
+| `POST` | `/chat` | Chat with the AI agent. Returns a full JSON response after processing completes. | Optional |
+| `POST` | `/chat/stream` | Chat with the AI agent via Server-Sent Events (SSE). Streams intermediate tool steps and text tokens in real-time. | Optional |
+
+### POST `/agent/chat`
+
+**Request body:**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Đơn hàng của tôi đâu?" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Response from agent",
+  "data": {
+    "text": "Tôi tìm thấy 2 đơn hàng của bạn..."
+  }
+}
+```
+
+### POST `/agent/chat/stream`
+
+Streams a `text/event-stream` response. Each event is a JSON object wrapped in SSE format (`data: <JSON>\n\n`).
+
+**Request body:** same as `/agent/chat`.
+
+**SSE Event types:**
+
+| `type` | Payload | Description |
+| :--- | :--- | :--- |
+| `step` | `{ toolName: string, message: string }` | A tool is being called (intermediate status). |
+| `delta` | `{ text: string }` | A single text token of the final answer. |
+| `done` | — | Stream has finished successfully. |
+| `error` | `{ message: string }` | An error occurred during processing. |
+
+**Example stream:**
+```
+data: {"type":"step","data":{"toolName":"searchProducts","message":"Đang gọi searchProducts..."}}
+
+data: {"type":"delta","data":{"text":"Tôi"}}
+
+data: {"type":"delta","data":{"text":" tìm"}}
+
+data: {"type":"done"}
+```
 
 ## Knowledge Base (`/knowledge`)
 
